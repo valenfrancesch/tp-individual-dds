@@ -13,6 +13,14 @@ import { crearResenia } from '../domain/Resenia.js';
 import { EstadoCompra } from '../domain/EstadoCompra.js';
 import { Roles } from '../domain/Roles.js';
 import { crearCambioEstadoCompra } from '../domain/CambioEstadoCompra.js';
+import { hashPassword } from '../auth/password.js';
+
+/** Credenciales demo (solo docs/consola; en store se guarda el hash). */
+export const SEED_PLAIN_PASSWORDS = {
+  'ana@ticket.it': 'ana123',
+  'luis@ticket.it': 'luis123',
+  'maria@ticket.it': 'maria123',
+};
 
 function daysFromNow(days) {
   const date = new Date();
@@ -20,7 +28,7 @@ function daysFromNow(days) {
   return date.toISOString();
 }
 
-export function seedDatabase() {
+export async function seedDatabase() {
   resetStore();
 
   const ana = crearUsuario({
@@ -28,7 +36,7 @@ export function seedDatabase() {
     nombre: 'Ana',
     apellido: 'Compradora',
     email: 'ana@ticket.it',
-    password: 'ana123',
+    password: await hashPassword(SEED_PLAIN_PASSWORDS['ana@ticket.it']),
     roles: [Roles.COMPRADOR],
     favoritos: [],
   });
@@ -38,7 +46,7 @@ export function seedDatabase() {
     nombre: 'Luis',
     apellido: 'Organizador',
     email: 'luis@ticket.it',
-    password: 'luis123',
+    password: await hashPassword(SEED_PLAIN_PASSWORDS['luis@ticket.it']),
     roles: [Roles.ORGANIZADOR],
     favoritos: [],
   });
@@ -48,7 +56,7 @@ export function seedDatabase() {
     nombre: 'Maria',
     apellido: 'Dual',
     email: 'maria@ticket.it',
-    password: 'maria123',
+    password: await hashPassword(SEED_PLAIN_PASSWORDS['maria@ticket.it']),
     roles: [Roles.COMPRADOR, Roles.ORGANIZADOR],
     favoritos: [],
   });
@@ -221,7 +229,7 @@ export function seedDatabase() {
   return {
     usuarios: [ana, luis, maria].map((u) => ({
       email: u.email,
-      password: u.password,
+      password: SEED_PLAIN_PASSWORDS[u.email],
       roles: u.roles,
     })),
   };

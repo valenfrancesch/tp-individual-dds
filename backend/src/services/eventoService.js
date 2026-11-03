@@ -9,6 +9,7 @@ import { EstadoCompra } from '../domain/EstadoCompra.js';
 import { nextId } from '../repositories/memoryStore.js';
 import { Roles, tieneRol } from '../domain/Roles.js';
 import { usuarioPublico } from '../domain/Usuario.js';
+import { includesNormalized } from '../utils/normalizeText.js';
 
 function puntajeOrganizador(organizadorId) {
   const resenias = reseniaRepository.findByOrganizador(organizadorId);
@@ -70,12 +71,12 @@ export function listarEventos({ q, categoriaId, orden, dir } = {}, usuario = nul
     .map((e) => enriquecerEvento(e, usuario));
 
   if (q) {
-    const query = String(q).toLowerCase();
     eventos = eventos.filter(
       (e) =>
-        e.nombre.toLowerCase().includes(query) ||
-        e.descripcion.toLowerCase().includes(query) ||
-        (e.direccion || '').toLowerCase().includes(query),
+        includesNormalized(e.nombre, q) ||
+        includesNormalized(e.descripcion, q) ||
+        includesNormalized(e.direccion, q) ||
+        includesNormalized(e.categoria?.nombre, q),
     );
   }
 

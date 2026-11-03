@@ -22,7 +22,9 @@ npm start
 
 API en `http://localhost:3001`.
 
-Usuarios seed:
+Opcional: `JWT_SECRET=tu-secreto` (si no se define, usa un secret de desarrollo).
+
+Usuarios seed (documentados acá; en el store se guardan **hasheadas** con bcrypt):
 
 | Email | Password | Roles |
 | --- | --- | --- |
@@ -30,7 +32,9 @@ Usuarios seed:
 | luis@ticket.it | luis123 | ORGANIZADOR |
 | maria@ticket.it | maria123 | COMPRADOR, ORGANIZADOR |
 
-Auth: `Authorization: Bearer <userId>` (el login devuelve el `token` = id de usuario).
+**Auth:** `Authorization: Bearer <JWT>` (HS256, expira en 8h). El login ya no devuelve el `userId` como token.
+
+`GET /api/auth/seed-users` lista usuarios demo **sin passwords** y solo si `NODE_ENV !== 'production'` (o `ENABLE_SEED_USERS=true`).
 
 Smoke test del flujo principal (con el backend corriendo):
 
@@ -57,7 +61,7 @@ Configurá la URL del API en `frontend/src/api/config.js`:
 
 ```
 backend/src/
-  domain/ repositories/ services/ controllers/ routes/ middleware/ seed/
+  auth/ domain/ repositories/ services/ controllers/ routes/ middleware/ seed/
 frontend/src/
   api/ context/ navigation/ screens/ components/
 ```
