@@ -1,22 +1,14 @@
-import { getStore } from './memoryStore.js';
+import { crearRepositorio, getStore } from './memoryStore.js';
 
-export function findAll() {
-  return getStore().resenias;
+export const { findAll, findById, save } = crearRepositorio('resenias', 'resenia');
+
+export function findByOrganizador(organizador) {
+  return getStore().resenias.filter((r) => r.organizador.id === organizador.id);
 }
 
-export function findByOrganizador(organizadorId) {
-  return getStore().resenias.filter((r) => r.organizadorId === organizadorId);
-}
-
-export function findByEvento(eventoId) {
-  return getStore().resenias.filter((r) => r.eventoId === eventoId);
-}
-
-export function findByCompra(compraId) {
-  return getStore().resenias.find((r) => r.compraId === compraId) || null;
-}
-
-export function save(resenia) {
-  getStore().resenias.push(resenia);
-  return resenia;
+export function puntajeOrganizador(organizador) {
+  const resenias = findByOrganizador(organizador);
+  if (!resenias.length) return { promedio: null, cantidad: 0 };
+  const suma = resenias.reduce((acc, r) => acc + r.puntuacion, 0);
+  return { promedio: suma / resenias.length, cantidad: resenias.length };
 }

@@ -1,4 +1,5 @@
 import jwt from 'jsonwebtoken';
+import { unauthorized } from '../errors/AppError.js';
 
 const SECRET = process.env.JWT_SECRET || 'aiticketit-dev-secret';
 const EXPIRES_IN = '8h';
@@ -8,21 +9,12 @@ export function signToken(userId) {
 }
 
 export function verifyToken(token) {
+  let payload;
   try {
-    const payload = jwt.verify(token, SECRET);
-    const userId = payload.sub;
-    if (!userId) {
-      const error = new Error('Token inválido');
-      error.status = 401;
-      throw error;
-    }
-    return { userId };
+    payload = jwt.verify(token, SECRET);
   } catch (err) {
-    if (err.status === 401) throw err;
-    const error = new Error(
-      err.name === 'TokenExpiredError' ? 'Token expirado' : 'Token inválido',
-    );
-    error.status = 401;
-    throw error;
+    throw unauthorized(err.name === 'TokenExpiredError' ? 'Sesión expirada' : 'Token inválido');
   }
+  if (!payload?.sub) throw unauthorized('Token inválido');
+  return { userId: payload.sub };
 }

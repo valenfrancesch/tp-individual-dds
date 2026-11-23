@@ -1,63 +1,56 @@
 import * as compraService from '../services/compraService.js';
-
-function handleError(res, error) {
-  const status = error.status || 500;
-  return res.status(status).json({ error: error.message || 'Error interno' });
-}
+import { compraJSON, compraDetalleJSON, mensajeJSON } from '../presenters/compraPresenter.js';
+import { eventoJSON } from '../presenters/eventoPresenter.js';
+import { reseniaJSON } from '../presenters/reseniaPresenter.js';
 
 export function crear(req, res) {
-  try {
-    const compra = compraService.crearCompra(req.user, req.body);
-    return res.status(201).json(compra);
-  } catch (error) {
-    return handleError(res, error);
-  }
+  const compra = compraService.crearCompra(req.user, req.body);
+  res.status(201).json(compraDetalleJSON(compra, req.user));
 }
 
 export function mias(req, res) {
-  try {
-    return res.json(compraService.listarMisCompras(req.user));
-  } catch (error) {
-    return handleError(res, error);
-  }
+  res.json(compraService.listarMisCompras(req.user).map((c) => compraJSON(c, req.user)));
 }
 
 export function obtener(req, res) {
-  try {
-    return res.json(compraService.obtenerCompra(req.user, req.params.id));
-  } catch (error) {
-    return handleError(res, error);
-  }
+  res.json(compraDetalleJSON(compraService.obtenerCompra(req.user, req.params.id), req.user));
+}
+
+/** Genera un handler para un comando de dominio sobre la compra. */
+export function comando(nombre) {
+  return (req, res) => {
+    const compra = compraService.ejecutar(req.user, req.params.id, nombre);
+    res.json(compraDetalleJSON(compra, req.user));
+  };
+}
+
+export function listarMensajes(req, res) {
+  const compra = compraService.obtenerCompra(req.user, req.params.id);
+  res.json({
+    compra: compraJSON(compra, req.user),
+    mensajes: compra.mensajes.map(mensajeJSON),
+  });
+}
+
+export function enviarMensaje(req, res) {
+  const mensaje = compraService.enviarMensaje(req.user, req.params.id, req.body?.mensaje);
+  res.status(201).json(mensajeJSON(mensaje));
+}
+
+export function reseniar(req, res) {
+  const resenia = compraService.reseniar(req.user, req.params.id, req.body);
+  res.status(201).json(reseniaJSON(resenia));
 }
 
 export function porEvento(req, res) {
-  try {
-    return res.json(compraService.listarComprasDeEvento(req.user, req.params.id));
-  } catch (error) {
-    return handleError(res, error);
-  }
-}
-
-export function pagar(req, res) {
-  try {
-    return res.json(compraService.pagarCompra(req.user, req.params.id));
-  } catch (error) {
-    return handleError(res, error);
-  }
-}
-
-export function cancelar(req, res) {
-  try {
-    return res.json(compraService.cancelarCompra(req.user, req.params.id));
-  } catch (error) {
-    return handleError(res, error);
-  }
-}
-
-export function utilizar(req, res) {
-  try {
-    return res.json(compraService.utilizarCompra(req.user, req.params.id));
-  } catch (error) {
-    return handleError(res, error);
-  }
+  const { evento, compras, estadisticas } = compraService.comprasDeEvento(
+    req.user,
+    req.params.id,
+    { estado: req.query.estado },
+  );
+  res.json({
+    evento: eventoJSON(evento, req.user),
+    compras: compras.map((c) => compraJSON(c, req.user)),
+    estadisticas,
+  });
 }

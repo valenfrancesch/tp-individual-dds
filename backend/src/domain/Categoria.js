@@ -1,8 +1,8 @@
-export function crearCategoria({ id, nombre, descripcion, icono = 'pricetag' }) {
-  return {
-    id,
-    nombre,
-    descripcion: descripcion || '',
-    icono,
-  };
+export class Categoria {
+  constructor({ id = null, nombre, descripcion = '', icono = 'pricetag' }) {
+    this.id = id;
+    this.nombre = nombre;
+    this.descripcion = descripcion;
+    this.icono = icono;
+  }
 }

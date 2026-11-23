@@ -1,62 +1,43 @@
 import * as eventoService from '../services/eventoService.js';
+import * as reseniaService from '../services/reseniaService.js';
+import { eventoJSON, eventoDetalleJSON } from '../presenters/eventoPresenter.js';
+import { usuarioPerfil } from '../presenters/usuarioPresenter.js';
+import { reseniaJSON } from '../presenters/reseniaPresenter.js';
 
-function handleError(res, error) {
-  const status = error.status || 500;
-  return res.status(status).json({ error: error.message || 'Error interno' });
-}
-
-export function listarCategorias(req, res) {
-  try {
-    return res.json(eventoService.listarCategorias());
-  } catch (error) {
-    return handleError(res, error);
-  }
+export function listarCategorias(_req, res) {
+  res.json(eventoService.listarCategorias());
 }
 
 export function listarEventos(req, res) {
-  try {
-    const { q, categoriaId, orden, dir } = req.query;
-    return res.json(
-      eventoService.listarEventos(
-        { q, categoriaId, orden, dir },
-        req.user,
-      ),
-    );
-  } catch (error) {
-    return handleError(res, error);
-  }
+  const eventos = eventoService.listarEventos(req.query, req.user);
+  res.json(eventos.map((e) => eventoJSON(e, req.user)));
 }
 
 export function obtenerEvento(req, res) {
-  try {
-    return res.json(eventoService.obtenerEvento(req.params.id, req.user));
-  } catch (error) {
-    return handleError(res, error);
-  }
+  res.json(eventoDetalleJSON(eventoService.obtenerEvento(req.params.id), req.user));
 }
 
 export function crearEvento(req, res) {
-  try {
-    const evento = eventoService.crearEventoParaOrganizador(req.user, req.body);
-    return res.status(201).json(evento);
-  } catch (error) {
-    return handleError(res, error);
-  }
+  const evento = eventoService.crearEvento(req.user, req.body);
+  res.status(201).json(eventoDetalleJSON(evento, req.user));
 }
 
 export function misEventos(req, res) {
-  try {
-    return res.json(eventoService.listarMisEventos(req.user));
-  } catch (error) {
-    return handleError(res, error);
-  }
+  res.json(eventoService.listarMisEventos(req.user).map((e) => eventoJSON(e, req.user)));
 }
 
-export function toggleFavorito(req, res) {
-  try {
-    const user = eventoService.toggleFavorito(req.user, req.params.eventoId);
-    return res.json(user);
-  } catch (error) {
-    return handleError(res, error);
-  }
+export function listarFavoritos(req, res) {
+  res.json(eventoService.listarFavoritos(req.user).map((e) => eventoJSON(e, req.user)));
+}
+
+export function agregarFavorito(req, res) {
+  res.json(usuarioPerfil(eventoService.agregarFavorito(req.user, req.params.eventoId)));
+}
+
+export function quitarFavorito(req, res) {
+  res.json(usuarioPerfil(eventoService.quitarFavorito(req.user, req.params.eventoId)));
+}
+
+export function misResenias(req, res) {
+  res.json(reseniaService.reseniasRecibidas(req.user).map(reseniaJSON));
 }

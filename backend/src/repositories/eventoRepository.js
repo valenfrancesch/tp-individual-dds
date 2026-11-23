@@ -1,26 +1,16 @@
-import { getStore } from './memoryStore.js';
+import { crearRepositorio, getStore, nextId } from './memoryStore.js';
 
-export function findAll() {
-  return getStore().eventos;
-}
+const base = crearRepositorio('eventos', 'evento');
 
-export function findById(id) {
-  return getStore().eventos.find((e) => e.id === id) || null;
-}
-
-export function findByOrganizador(organizadorId) {
-  return getStore().eventos.filter((e) => e.organizadorId === organizadorId);
-}
+export const { findAll, findById } = base;
 
 export function save(evento) {
-  getStore().eventos.push(evento);
-  return evento;
+  evento.tiposEntrada.forEach((t) => {
+    if (!t.id) t.id = nextId('tipoEntrada');
+  });
+  return base.save(evento);
 }
 
-export function update(evento) {
-  const store = getStore();
-  const index = store.eventos.findIndex((e) => e.id === evento.id);
-  if (index === -1) return null;
-  store.eventos[index] = evento;
-  return evento;
+export function findByOrganizador(organizador) {
+  return getStore().eventos.filter((e) => e.esOrganizadoPor(organizador));
 }

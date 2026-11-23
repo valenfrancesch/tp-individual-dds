@@ -5,12 +5,13 @@
   "scripts": {
     "start": "node src/index.js",
     "dev": "node --watch src/index.js",
+    "test": "node --test",
     "smoke": "node scripts/smoke.mjs"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "description": "",
+  "description": "API de AI Ticket It (Express + persistencia en memoria)",
   "dependencies": {
     "bcryptjs": "^3.0.3",
     "cors": "^2.8.6",

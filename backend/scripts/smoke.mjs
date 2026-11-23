@@ -1,5 +1,6 @@
 /**
- * Smoke E2E: login → compra multi-item → chat → cancelar → utilizar → reseña
+ * Smoke E2E contra un backend levantado (npm start):
+ * login → comprar → pagar → chat → cancelar → reembolsar → utilizar → reseñar
  */
 const API = process.env.API_URL || 'http://localhost:3001';
 
@@ -17,79 +18,49 @@ async function req(path, { method = 'GET', token, body } = {}) {
   return data;
 }
 
-async function main() {
-  const ana = await req('/api/auth/login', {
-    method: 'POST',
-    body: { email: 'ana@ticket.it', password: 'ana123' },
-  });
-  const luis = await req('/api/auth/login', {
-    method: 'POST',
-    body: { email: 'luis@ticket.it', password: 'luis123' },
-  });
+const login = (email, password) =>
+  req('/api/auth/login', { method: 'POST', body: { email, password } }).then((r) => r.token);
 
-  const eventos = await req('/api/eventos?orden=fecha&dir=asc', {
-    token: ana.token,
-  });
-  const evento = eventos.find((e) => e.organizadorId === luis.user.id);
-  const t1 = evento.tiposEntrada[0];
-  const t2 = evento.tiposEntrada[1];
+async function main() {
+  const ana = await login('ana@ticket.it', 'ana123');
+  const luis = await login('luis@ticket.it', 'luis123');
+
+  const [rock] = await req('/api/eventos?q=rock', { token: ana });
+  const tipo = rock.tiposEntrada[0];
 
   const compra = await req('/api/compras', {
     method: 'POST',
-    token: ana.token,
-    body: {
-      eventoId: evento.id,
-      items: [
-        { tipoEntradaId: t1.id, cantidad: 1 },
-        { tipoEntradaId: t2.id, cantidad: 1 },
-      ],
-    },
+    token: ana,
+    body: { eventoId: rock.id, tipoEntradaId: tipo.id, cantidad: 1 },
   });
-  const pagada = await req(`/api/compras/${compra.id}/pagar`, {
-    method: 'POST',
-    token: ana.token,
-  });
-  console.log('OK compra multi-item', pagada.id, pagada.estado, pagada.total);
+  await req(`/api/compras/${compra.id}/pagar`, { method: 'POST', token: ana });
+  console.log('OK compra + pago', compra.id);
 
-  const chat = await req(`/api/compras/${pagada.id}/mensajes`, {
-    token: ana.token,
-  });
-  if (!chat.evento?.nombre) throw new Error('Chat sin header de evento');
-  await req(`/api/compras/${pagada.id}/mensajes`, {
-    method: 'POST',
-    token: ana.token,
-    body: { mensaje: 'Consulta smoke' },
-  });
-  console.log('OK chat header + mensaje');
+  await req(`/api/compras/${compra.id}/mensajes`, { method: 'POST', token: ana, body: { mensaje: 'Consulta smoke' } });
+  await req(`/api/compras/${compra.id}/mensajes`, { method: 'POST', token: luis, body: { mensaje: 'Respuesta smoke' } });
+  console.log('OK chat');
 
-  const mias = await req('/api/compras/mias', { token: ana.token });
-  const confirmada = mias.find(
-    (c) => c.estado === 'CONFIRMADA' && c.id !== pagada.id,
-  );
-  if (confirmada) {
-    await req(`/api/compras/${confirmada.id}/utilizar`, {
-      method: 'POST',
-      token: luis.token,
-    });
-    await req(`/api/compras/${confirmada.id}/resenia`, {
-      method: 'POST',
-      token: ana.token,
-      body: { detalle: 'Smoke review', puntuacion: 5 },
-    });
-    console.log('OK utilizar + reseña', confirmada.id);
+  await req(`/api/compras/${compra.id}/cancelar`, { method: 'POST', token: ana });
+  const reembolsada = await req(`/api/compras/${compra.id}/reembolsar`, { method: 'POST', token: luis });
+  console.log('OK cancelar + reembolsar', reembolsada.estado);
+
+  const { compras } = await req(`/api/eventos/${(await req('/api/eventos?q=jazz', { token: luis }))[0].id}/compras`, { token: luis });
+  const paraUsar = compras.find((c) => c.acciones.includes('utilizar'));
+  if (paraUsar) {
+    await req(`/api/compras/${paraUsar.id}/utilizar`, { method: 'POST', token: luis });
+    console.log('OK utilizar', paraUsar.id);
   }
 
-  const cancelada = await req(`/api/compras/${pagada.id}/cancelar`, {
-    method: 'POST',
-    token: ana.token,
-  });
-  console.log('OK cancelar', cancelada.estado);
-
-  const stats = await req(`/api/eventos/${evento.id}/compras`, {
-    token: luis.token,
-  });
-  if (!stats.estadisticas?.porTipo) throw new Error('Faltan estadisticas');
-  console.log('OK stats organizador');
+  const mias = await req('/api/compras/mias', { token: ana });
+  const paraReseniar = mias.find((c) => c.acciones.includes('reseniar'));
+  if (paraReseniar) {
+    await req(`/api/compras/${paraReseniar.id}/resenia`, {
+      method: 'POST',
+      token: ana,
+      body: { puntuacion: 5, detalle: 'Smoke review' },
+    });
+    console.log('OK reseña', paraReseniar.id);
+  }
 
   console.log('SMOKE OK');
 }

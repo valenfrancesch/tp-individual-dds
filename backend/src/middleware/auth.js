@@ -1,25 +1,21 @@
 import * as usuarioRepository from '../repositories/usuarioRepository.js';
 import { verifyToken } from '../auth/jwt.js';
+import { forbidden, unauthorized } from '../errors/AppError.js';
 
-export function requireAuth(req, res, next) {
-  const header = req.headers.authorization || '';
-  const [scheme, token] = header.split(' ');
+export function requireAuth(req, _res, next) {
+  const [scheme, token] = (req.headers.authorization || '').split(' ');
+  if (scheme !== 'Bearer' || !token) throw unauthorized('Token requerido');
 
-  if (scheme !== 'Bearer' || !token) {
-    return res.status(401).json({ error: 'Token requerido' });
-  }
+  const { userId } = verifyToken(token);
+  const usuario = usuarioRepository.findById(userId);
+  if (!usuario) throw unauthorized('Token inválido');
+  req.user = usuario;
+  next();
+}
 
-  try {
-    const { userId } = verifyToken(token);
-    const usuario = usuarioRepository.findById(userId);
-    if (!usuario) {
-      return res.status(401).json({ error: 'Token inválido' });
-    }
-    req.user = usuario;
-    return next();
-  } catch (error) {
-    return res.status(error.status || 401).json({
-      error: error.message || 'Token inválido',
-    });
-  }
+export function requireRole(rol) {
+  return (req, _res, next) => {
+    if (!req.user?.tieneRol(rol)) throw forbidden(`Se requiere rol ${rol}`);
+    next();
+  };
 }

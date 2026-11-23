@@ -1,36 +1,26 @@
 import * as authService from '../services/authService.js';
-
-function handleError(res, error) {
-  const status = error.status || 500;
-  return res.status(status).json({ error: error.message || 'Error interno' });
-}
+import { usuarioPerfil } from '../presenters/usuarioPresenter.js';
+import { notFound } from '../errors/AppError.js';
 
 export async function login(req, res) {
-  try {
-    const { email, password } = req.body || {};
-    const result = await authService.login(email, password);
-    return res.json(result);
-  } catch (error) {
-    return handleError(res, error);
-  }
+  const { email, password } = req.body || {};
+  const { token, usuario } = await authService.login(email, password);
+  res.json({ token, user: usuarioPerfil(usuario) });
 }
 
 export function me(req, res) {
-  try {
-    const user = authService.me(req.user.id);
-    return res.json(user);
-  } catch (error) {
-    return handleError(res, error);
-  }
+  res.json(usuarioPerfil(req.user));
 }
 
-export function seedUsers(req, res) {
-  try {
-    if (!authService.isSeedUsersEnabled()) {
-      return res.status(404).json({ error: 'No encontrado' });
-    }
-    return res.json(authService.listSeedUsers());
-  } catch (error) {
-    return handleError(res, error);
-  }
+export function seedUsers(_req, res) {
+  if (!authService.isSeedUsersEnabled()) throw notFound();
+  res.json(
+    authService.listSeedUsers().map((u) => ({
+      id: u.id,
+      nombre: u.nombre,
+      apellido: u.apellido,
+      email: u.email,
+      roles: u.roles,
+    })),
+  );
 }

@@ -1,15 +1,8 @@
-export function crearCambioEstadoCompra({
-  id,
-  compraId,
-  estado,
-  quienId,
-  fechaHora = new Date().toISOString(),
-}) {
-  return {
-    id,
-    compraId,
-    estado,
-    quienId,
-    fechaHora,
-  };
+export class CambioEstadoCompra {
+  constructor({ compra, estado, quien, fechaHora = new Date() }) {
+    this.compra = compra;
+    this.estado = estado;
+    this.quien = quien;
+    this.fechaHora = new Date(fechaHora);
+  }
 }

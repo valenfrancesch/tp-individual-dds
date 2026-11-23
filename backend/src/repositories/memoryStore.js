@@ -1,21 +1,14 @@
+/**
+ * "Base de datos" en memoria. Cada colección guarda instancias de dominio;
+ * los mensajes y el historial de estados viven dentro de cada Compra.
+ */
 const store = {
   usuarios: [],
   categorias: [],
   eventos: [],
   compras: [],
-  mensajes: [],
   resenias: [],
-  cambiosEstado: [],
-  counters: {
-    usuario: 0,
-    categoria: 0,
-    evento: 0,
-    tipoEntrada: 0,
-    compra: 0,
-    mensaje: 0,
-    resenia: 0,
-    cambioEstado: 0,
-  },
+  counters: {},
 };
 
 export function getStore() {
@@ -23,7 +16,7 @@ export function getStore() {
 }
 
 export function nextId(entity) {
-  store.counters[entity] += 1;
+  store.counters[entity] = (store.counters[entity] || 0) + 1;
   return `${entity}-${store.counters[entity]}`;
 }
 
@@ -32,10 +25,22 @@ export function resetStore() {
   store.categorias = [];
   store.eventos = [];
   store.compras = [];
-  store.mensajes = [];
   store.resenias = [];
-  store.cambiosEstado = [];
-  Object.keys(store.counters).forEach((key) => {
-    store.counters[key] = 0;
-  });
+  store.counters = {};
+}
+
+/**
+ * Crea un repositorio básico sobre una colección del store.
+ * `save` asigna id si la entidad no lo tiene.
+ */
+export function crearRepositorio(coleccion, prefijo) {
+  return {
+    findAll: () => store[coleccion],
+    findById: (id) => store[coleccion].find((e) => e.id === id) || null,
+    save(entidad) {
+      if (!entidad.id) entidad.id = nextId(prefijo);
+      if (!store[coleccion].includes(entidad)) store[coleccion].push(entidad);
+      return entidad;
+    },
+  };
 }

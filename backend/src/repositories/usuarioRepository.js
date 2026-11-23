@@ -1,30 +1,10 @@
-import { getStore } from './memoryStore.js';
+import { crearRepositorio, getStore } from './memoryStore.js';
 
-export function findAll() {
-  return getStore().usuarios;
-}
+const base = crearRepositorio('usuarios', 'usuario');
 
-export function findById(id) {
-  return getStore().usuarios.find((u) => u.id === id) || null;
-}
+export const { findAll, findById, save } = base;
 
 export function findByEmail(email) {
-  return (
-    getStore().usuarios.find(
-      (u) => u.email.toLowerCase() === String(email).toLowerCase(),
-    ) || null
-  );
-}
-
-export function save(usuario) {
-  getStore().usuarios.push(usuario);
-  return usuario;
-}
-
-export function update(usuario) {
-  const store = getStore();
-  const index = store.usuarios.findIndex((u) => u.id === usuario.id);
-  if (index === -1) return null;
-  store.usuarios[index] = usuario;
-  return usuario;
+  const buscado = String(email ?? '').trim().toLowerCase();
+  return getStore().usuarios.find((u) => u.email.toLowerCase() === buscado) || null;
 }
