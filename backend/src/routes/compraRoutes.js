@@ -8,12 +8,10 @@ const router = Router();
 router.use('/compras', requireAuth);
 
 router.post('/compras', requireRole(Roles.COMPRADOR), compraController.crear);
-router.get('/compras/mias', compraController.mias);
+router.get('/usuarios/me/compras', requireAuth, compraController.mias);
 router.get('/compras/:id', compraController.obtener);
-router.post('/compras/:id/pagar', compraController.comando('pagar'));
-router.post('/compras/:id/cancelar', compraController.comando('cancelar'));
-router.post('/compras/:id/utilizar', compraController.comando('utilizar'));
-router.post('/compras/:id/reembolsar', compraController.comando('marcarReembolsada'));
+// Pagar, cancelar, utilizar y reembolsar = registrar un cambio de estado { estado }.
+router.post('/compras/:id/cambios-estado', compraController.cambiarEstado);
 router.get('/compras/:id/mensajes', compraController.listarMensajes);
 router.post('/compras/:id/mensajes', compraController.enviarMensaje);
 router.post('/compras/:id/resenia', compraController.reseniar);

@@ -92,24 +92,24 @@ Los 12 casos de uso de la consigna, más estos propios:
 
 ## API
 
-Todas las rutas (salvo login y seed-users) requieren `Authorization: Bearer <JWT>`. Los errores responden `{ "error": "mensaje" }` con su status HTTP.
+Las rutas nombran recursos (sustantivos), no acciones: el verbo lo da el método HTTP. Todas (salvo `POST /api/sesiones` y `GET /api/usuarios/demo`) requieren `Authorization: Bearer <JWT>`. Los errores responden `{ "error": "mensaje" }` con su status HTTP.
 
 | Método | Ruta | Rol | Descripción |
 | --- | --- | --- | --- |
-| POST | `/api/auth/login` | — | `{ email, password }` → `{ token, user }` |
-| GET | `/api/auth/me` | — | Perfil (incluye ids de favoritos) |
-| GET | `/api/auth/seed-users` | — | Usuarios demo (sin passwords; deshabilitado en producción) |
+| POST | `/api/sesiones` | — | Iniciar sesión: `{ email, password }` → `{ token, user }` |
+| GET | `/api/usuarios/me` | — | Perfil (incluye ids de favoritos) |
+| GET | `/api/usuarios/demo` | — | Usuarios demo (sin passwords; deshabilitado en producción) |
 | GET | `/api/categorias` | — | |
 | GET | `/api/eventos` | — | Filtros: `q`, `categoriaId`, `precioMin`, `precioMax`, `soloFavoritos`, `proximos`, `orden=precio\|fecha\|puntaje`, `dir=asc\|desc` |
 | GET | `/api/eventos/:id` | — | Detalle + reseñas del organizador |
 | POST | `/api/eventos` | ORGANIZADOR | Crear (fecha futura, tipos con precio > 0 y cupo entero, URLs http/https) |
-| GET | `/api/eventos/mios` | ORGANIZADOR | |
+| GET | `/api/usuarios/me/eventos` | ORGANIZADOR | Eventos que organizo |
 | GET | `/api/eventos/:id/compras` | ORGANIZADOR (dueño) | Compras + estadísticas; filtro `estado` |
 | GET/POST/DELETE | `/api/usuarios/me/favoritos[/:eventoId]` | — | Listar / agregar / quitar (idempotentes) |
 | POST | `/api/compras` | COMPRADOR | `{ eventoId, tipoEntradaId, cantidad }` |
-| GET | `/api/compras/mias` | — | |
+| GET | `/api/usuarios/me/compras` | — | Mis compras |
 | GET | `/api/compras/:id` | participante | Detalle + historial + acciones |
-| POST | `/api/compras/:id/pagar` · `/cancelar` · `/utilizar` · `/reembolsar` | según regla | Comandos de dominio |
+| POST | `/api/compras/:id/cambios-estado` | según regla | `{ estado }`: `CONFIRMADA` (pagar), `CANCELADA` (cancelar), `UTILIZADA` (marcar utilizada), `REEMBOLSADA` (marcar reembolsada). Crea un `CambioEstadoCompra` en el historial |
 | GET/POST | `/api/compras/:id/mensajes` | participante | Chat |
 | POST | `/api/compras/:id/resenia` | comprador | `{ puntuacion, detalle }` |
 | GET | `/api/organizadores/me/resenias` | ORGANIZADOR | Reseñas recibidas |

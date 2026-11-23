@@ -27,13 +27,22 @@ export function listarMisCompras(usuario) {
   return compraRepository.findByComprador(usuario).sort((a, b) => b.fecha - a.fecha);
 }
 
-const COMANDOS = new Set(['pagar', 'cancelar', 'utilizar', 'marcarReembolsada']);
+/** Estado destino → operación de dominio que lo produce (cada una valida sus reglas). */
+const OPERACION_POR_ESTADO = Object.freeze({
+  [EstadoCompra.CONFIRMADA]: 'pagar',
+  [EstadoCompra.CANCELADA]: 'cancelar',
+  [EstadoCompra.UTILIZADA]: 'utilizar',
+  [EstadoCompra.REEMBOLSADA]: 'marcarReembolsada',
+});
 
-/** Ejecuta un comando de dominio (pagar, cancelar, utilizar, marcarReembolsada). */
-export function ejecutar(usuario, compraId, comando, ahora = new Date()) {
-  if (!COMANDOS.has(comando)) throw badRequest(`Acción desconocida: ${comando}`);
+/** Registra un cambio de estado en la compra delegando en el dominio. */
+export function cambiarEstado(usuario, compraId, estado, ahora = new Date()) {
+  const operacion = OPERACION_POR_ESTADO[estado];
+  if (!operacion) {
+    throw badRequest(`estado debe ser uno de: ${Object.keys(OPERACION_POR_ESTADO).join(', ')}`);
+  }
   const compra = obtenerCompra(usuario, compraId);
-  compra[comando](usuario, ahora);
+  compra[operacion](usuario, ahora);
   return compra;
 }
 

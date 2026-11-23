@@ -16,12 +16,10 @@ export function obtener(req, res) {
   res.json(compraDetalleJSON(compraService.obtenerCompra(req.user, req.params.id), req.user));
 }
 
-/** Genera un handler para un comando de dominio sobre la compra. */
-export function comando(nombre) {
-  return (req, res) => {
-    const compra = compraService.ejecutar(req.user, req.params.id, nombre);
-    res.json(compraDetalleJSON(compra, req.user));
-  };
+/** Registra un cambio de estado ({ estado }): pagar, cancelar, utilizar o reembolsar. */
+export function cambiarEstado(req, res) {
+  const compra = compraService.cambiarEstado(req.user, req.params.id, req.body?.estado);
+  res.status(201).json(compraDetalleJSON(compra, req.user));
 }
 
 export function listarMensajes(req, res) {

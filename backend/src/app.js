@@ -14,7 +14,7 @@ app.get('/api/health', (_req, res) => {
   res.json({ ok: true, service: 'AI Ticket It API' });
 });
 
-app.use('/api/auth', authRoutes);
+app.use('/api', authRoutes);
 app.use('/api', compraRoutes);
 app.use('/api', eventoRoutes);
 

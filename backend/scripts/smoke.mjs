@@ -19,7 +19,7 @@ async function req(path, { method = 'GET', token, body } = {}) {
 }
 
 const login = (email, password) =>
-  req('/api/auth/login', { method: 'POST', body: { email, password } }).then((r) => r.token);
+  req('/api/sesiones', { method: 'POST', body: { email, password } }).then((r) => r.token);
 
 async function main() {
   const ana = await login('ana@ticket.it', 'ana123');
@@ -33,25 +33,25 @@ async function main() {
     token: ana,
     body: { eventoId: rock.id, tipoEntradaId: tipo.id, cantidad: 1 },
   });
-  await req(`/api/compras/${compra.id}/pagar`, { method: 'POST', token: ana });
+  await req(`/api/compras/${compra.id}/cambios-estado`, { method: 'POST', token: ana, body: { estado: 'CONFIRMADA' } });
   console.log('OK compra + pago', compra.id);
 
   await req(`/api/compras/${compra.id}/mensajes`, { method: 'POST', token: ana, body: { mensaje: 'Consulta smoke' } });
   await req(`/api/compras/${compra.id}/mensajes`, { method: 'POST', token: luis, body: { mensaje: 'Respuesta smoke' } });
   console.log('OK chat');
 
-  await req(`/api/compras/${compra.id}/cancelar`, { method: 'POST', token: ana });
-  const reembolsada = await req(`/api/compras/${compra.id}/reembolsar`, { method: 'POST', token: luis });
+  await req(`/api/compras/${compra.id}/cambios-estado`, { method: 'POST', token: ana, body: { estado: 'CANCELADA' } });
+  const reembolsada = await req(`/api/compras/${compra.id}/cambios-estado`, { method: 'POST', token: luis, body: { estado: 'REEMBOLSADA' } });
   console.log('OK cancelar + reembolsar', reembolsada.estado);
 
   const { compras } = await req(`/api/eventos/${(await req('/api/eventos?q=jazz', { token: luis }))[0].id}/compras`, { token: luis });
   const paraUsar = compras.find((c) => c.acciones.includes('utilizar'));
   if (paraUsar) {
-    await req(`/api/compras/${paraUsar.id}/utilizar`, { method: 'POST', token: luis });
+    await req(`/api/compras/${paraUsar.id}/cambios-estado`, { method: 'POST', token: luis, body: { estado: 'UTILIZADA' } });
     console.log('OK utilizar', paraUsar.id);
   }
 
-  const mias = await req('/api/compras/mias', { token: ana });
+  const mias = await req('/api/usuarios/me/compras', { token: ana });
   const paraReseniar = mias.find((c) => c.acciones.includes('reseniar'));
   if (paraReseniar) {
     await req(`/api/compras/${paraReseniar.id}/resenia`, {

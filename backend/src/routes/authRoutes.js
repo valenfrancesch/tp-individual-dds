@@ -4,8 +4,9 @@ import { requireAuth } from '../middleware/auth.js';
 
 const router = Router();
 
-router.get('/seed-users', authController.seedUsers);
-router.post('/login', authController.login);
-router.get('/me', requireAuth, authController.me);
+// Iniciar sesión = crear una sesión (devuelve el JWT).
+router.post('/sesiones', authController.login);
+router.get('/usuarios/demo', authController.seedUsers);
+router.get('/usuarios/me', requireAuth, authController.me);
 
 export default router;

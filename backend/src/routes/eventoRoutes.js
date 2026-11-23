@@ -11,7 +11,7 @@ router.use(requireAuth);
 
 router.get('/categorias', eventoController.listarCategorias);
 router.get('/eventos', eventoController.listarEventos);
-router.get('/eventos/mios', organizador, eventoController.misEventos);
+router.get('/usuarios/me/eventos', organizador, eventoController.misEventos);
 router.get('/eventos/:id', eventoController.obtenerEvento);
 router.post('/eventos', organizador, eventoController.crearEvento);
 router.get('/eventos/:id/compras', organizador, compraController.porEvento);

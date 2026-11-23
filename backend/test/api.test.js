@@ -19,7 +19,7 @@ async function req(path, { method = 'GET', token, body } = {}) {
 }
 
 async function login(email, password) {
-  const { data } = await req('/api/auth/login', { method: 'POST', body: { email, password } });
+  const { data } = await req('/api/sesiones', { method: 'POST', body: { email, password } });
   return data.token;
 }
 
@@ -32,7 +32,7 @@ before(async () => {
 after(() => server.close());
 
 test('auth: credenciales inválidas y token requerido', async () => {
-  const bad = await req('/api/auth/login', { method: 'POST', body: { email: 'ana@ticket.it', password: 'x' } });
+  const bad = await req('/api/sesiones', { method: 'POST', body: { email: 'ana@ticket.it', password: 'x' } });
   assert.equal(bad.status, 401);
   const sinToken = await req('/api/eventos');
   assert.equal(sinToken.status, 401);
@@ -57,9 +57,11 @@ test('flujo completo: comprar → pagar → chat → cancelar → reembolsar', a
   assert.deepEqual(creada.data.acciones, ['pagar', 'cancelar']);
 
   const id = creada.data.id;
-  const pagada = await req(`/api/compras/${id}/pagar`, { method: 'POST', token: ana });
+  const estadoInvalido = await req(`/api/compras/${id}/cambios-estado`, { method: 'POST', token: ana, body: { estado: 'PENDIENTE' } });
+  assert.equal(estadoInvalido.status, 400);
+  const pagada = await req(`/api/compras/${id}/cambios-estado`, { method: 'POST', token: ana, body: { estado: 'CONFIRMADA' } });
   assert.equal(pagada.data.estado, 'CONFIRMADA');
-  const repago = await req(`/api/compras/${id}/pagar`, { method: 'POST', token: ana });
+  const repago = await req(`/api/compras/${id}/cambios-estado`, { method: 'POST', token: ana, body: { estado: 'CONFIRMADA' } });
   assert.equal(repago.status, 400);
 
   await req(`/api/compras/${id}/mensajes`, { method: 'POST', token: ana, body: { mensaje: 'Hola' } });
@@ -67,11 +69,11 @@ test('flujo completo: comprar → pagar → chat → cancelar → reembolsar', a
   const chat = await req(`/api/compras/${id}/mensajes`, { token: luis });
   assert.equal(chat.data.mensajes.length, 2);
 
-  const cancelada = await req(`/api/compras/${id}/cancelar`, { method: 'POST', token: ana });
+  const cancelada = await req(`/api/compras/${id}/cambios-estado`, { method: 'POST', token: ana, body: { estado: 'CANCELADA' } });
   assert.equal(cancelada.data.estado, 'CANCELADA');
-  const reembolsoComprador = await req(`/api/compras/${id}/reembolsar`, { method: 'POST', token: ana });
+  const reembolsoComprador = await req(`/api/compras/${id}/cambios-estado`, { method: 'POST', token: ana, body: { estado: 'REEMBOLSADA' } });
   assert.equal(reembolsoComprador.status, 403);
-  const reembolsada = await req(`/api/compras/${id}/reembolsar`, { method: 'POST', token: luis });
+  const reembolsada = await req(`/api/compras/${id}/cambios-estado`, { method: 'POST', token: luis, body: { estado: 'REEMBOLSADA' } });
   assert.equal(reembolsada.data.estado, 'REEMBOLSADA');
   assert.deepEqual(
     reembolsada.data.historial.map((h) => h.estado),
@@ -101,7 +103,7 @@ test('no se puede superar el cupo', async () => {
 test('reseña de una compra utilizada aparece en el organizador', async () => {
   const ana = await login('ana@ticket.it', 'ana123');
   const luis = await login('luis@ticket.it', 'luis123');
-  const { data: mias } = await req('/api/compras/mias', { token: ana });
+  const { data: mias } = await req('/api/usuarios/me/compras', { token: ana });
   const paraReseniar = mias.find((c) => c.acciones.includes('reseniar'));
   assert.ok(paraReseniar, 'el seed deja una compra lista para reseñar');
 

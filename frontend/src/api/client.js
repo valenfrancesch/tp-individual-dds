@@ -60,9 +60,9 @@ function queryString(params) {
 }
 
 export const AuthApi = {
-  seedUsers: () => api('/api/auth/seed-users'),
-  login: (email, password) => post('/api/auth/login', { email, password }),
-  me: () => api('/api/auth/me'),
+  seedUsers: () => api('/api/usuarios/demo'),
+  login: (email, password) => post('/api/sesiones', { email, password }),
+  me: () => api('/api/usuarios/me'),
 };
 
 export const EventosApi = {
@@ -71,7 +71,7 @@ export const EventosApi = {
   listar: (params = {}) => api(`/api/eventos${queryString(params)}`),
   obtener: (id) => api(`/api/eventos/${id}`),
   crear: (payload) => post('/api/eventos', payload),
-  mios: () => api('/api/eventos/mios'),
+  mios: () => api('/api/usuarios/me/eventos'),
   favoritos: () => api('/api/usuarios/me/favoritos'),
   agregarFavorito: (eventoId) => post(`/api/usuarios/me/favoritos/${eventoId}`),
   quitarFavorito: (eventoId) =>
@@ -81,14 +81,16 @@ export const EventosApi = {
 export const ComprasApi = {
   crear: ({ eventoId, tipoEntradaId, cantidad }) =>
     post('/api/compras', { eventoId, tipoEntradaId, cantidad }),
-  mias: () => api('/api/compras/mias'),
+  mias: () => api('/api/usuarios/me/compras'),
   obtener: (id) => api(`/api/compras/${id}`),
   porEvento: (eventoId, estado) =>
     api(`/api/eventos/${eventoId}/compras${queryString({ estado })}`),
-  pagar: (id) => post(`/api/compras/${id}/pagar`),
-  cancelar: (id) => post(`/api/compras/${id}/cancelar`),
-  utilizar: (id) => post(`/api/compras/${id}/utilizar`),
-  reembolsar: (id) => post(`/api/compras/${id}/reembolsar`),
+  /** Pagar, cancelar, utilizar y reembolsar registran un cambio de estado. */
+  cambiarEstado: (id, estado) => post(`/api/compras/${id}/cambios-estado`, { estado }),
+  pagar: (id) => ComprasApi.cambiarEstado(id, 'CONFIRMADA'),
+  cancelar: (id) => ComprasApi.cambiarEstado(id, 'CANCELADA'),
+  utilizar: (id) => ComprasApi.cambiarEstado(id, 'UTILIZADA'),
+  reembolsar: (id) => ComprasApi.cambiarEstado(id, 'REEMBOLSADA'),
   mensajes: (id) => api(`/api/compras/${id}/mensajes`),
   enviarMensaje: (id, mensaje) => post(`/api/compras/${id}/mensajes`, { mensaje }),
   reseniar: (id, { puntuacion, detalle }) =>
